@@ -63,3 +63,93 @@ const galleryItems = [
     description: "Lighthouse Coast Sea",
   },
 ];
+
+const gallery = document.querySelector(".js-gallery");
+const lightbox = document.querySelector(".js-lightbox");
+const lightboxImage = document.querySelector(".lightbox__image");
+const closeButton = document.querySelector('[data-action="close-lightbox"]');
+const overlay = document.querySelector(".lightbox__overlay");
+
+// 1. Рендер розмітки
+function createGallery(items) {
+  return items
+    .map(
+      ({ preview, original, description }) => `
+    <li class="gallery__item">
+      <a class="gallery__link" href="${original}">
+        <img
+          class="gallery__image"
+          src="${preview}"
+          data-source="${original}"
+          alt="${description}"
+        />
+      </a>
+    </li>
+  `
+    )
+    .join("");
+}
+
+gallery.innerHTML = createGallery(galleryItems);
+
+// 2. Відкриття модального вікна
+gallery.addEventListener("click", onGalleryClick);
+
+function onGalleryClick(event) {
+  event.preventDefault();
+
+  const target = event.target;
+  if (target.nodeName !== "IMG") return;
+
+  openLightbox(target.dataset.source, target.alt);
+}
+
+function openLightbox(src, alt) {
+  lightbox.classList.add("is-open");
+  lightboxImage.src = src;
+  lightboxImage.alt = alt;
+
+  document.addEventListener("keydown", onKeyDown);
+}
+
+// 3. Закриття модального вікна
+closeButton.addEventListener("click", closeLightbox);
+overlay.addEventListener("click", closeLightbox);
+
+function closeLightbox() {
+  lightbox.classList.remove("is-open");
+  lightboxImage.src = "";
+  lightboxImage.alt = "";
+
+  document.removeEventListener("keydown", onKeyDown);
+}
+
+// 4. Закриття клавішею ESC
+function onKeyDown(event) {
+  if (event.key === "Escape") {
+    closeLightbox();
+  }
+
+  // 5. Перегортування зображень
+  if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+    changeImage(event.key);
+  }
+}
+
+function changeImage(direction) {
+  const currentIndex = galleryItems.findIndex(
+    (item) => item.original === lightboxImage.src
+  );
+
+  let newIndex;
+
+  if (direction === "ArrowRight") {
+    newIndex = (currentIndex + 1) % galleryItems.length;
+  } else if (direction === "ArrowLeft") {
+    newIndex = (currentIndex - 1 + galleryItems.length) % galleryItems.length;
+  }
+
+  const { original, description } = galleryItems[newIndex];
+  lightboxImage.src = original;
+  lightboxImage.alt = description;
+}
